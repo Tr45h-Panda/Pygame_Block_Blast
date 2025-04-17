@@ -1,5 +1,5 @@
 import pygame
-from object import BlockObject, spawn_random_block
+from object import BlockObject, spawn_random_block, render_3d_block
 from clear_line import ClearLine
 
 class Game:
@@ -70,6 +70,7 @@ class Game:
 
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
             for i, preview_block in enumerate(self.preview_blocks):
                 if self.is_mouse_on_block(preview_block):
                     # Spawn the full-size block and start dragging it
@@ -77,8 +78,15 @@ class Game:
                     self.active_block.dragging = True
                     self.active_block_original_position = (preview_block.x, preview_block.y)
                     self.active_block_index = i  # Track which preview block was picked up
-                    del self.preview_blocks[i]  # Remove the preview block
+
+                    # Calculate the offset based on the new full-sized block
+                    self.active_block.offset_x = mouse_x - self.active_block.x
+                    self.active_block.offset_y = mouse_y - self.active_block.y
+
+                    # Remove the preview block
+                    del self.preview_blocks[i]
                     break
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if self.active_block and self.active_block.dragging:
                 self.active_block.dragging = False
@@ -120,7 +128,7 @@ class Game:
             for row in range(self.grid_size):
                 for col in range(self.grid_size):
                     if self.can_place_block(block, col, row):
-                        print(f"Block {block.shape} can be placed at ({col}, {row})")
+                        # A valid move exists, so the game is not overI have no idea I have no idea what is going on 
                         return  # At least one valid move exists, so the game is not over
         print("No valid moves left. Game Over.")
         self.game_over = True  # No valid moves, game over
@@ -203,7 +211,11 @@ class Game:
                     self.cell_size,
                 )
                 if self.grid[row][col] != 0:  # Filled cell
-                    pygame.draw.rect(self.screen, self.grid[row][col], rect)  # Use the stored color
+                    color = self.grid[row][col]
+
+                    # Shrink the block slightly to fit inside the grid cell
+                    inner_rect = rect.inflate(-4, -4)  # Reduce size by 4 pixels on each side
+                    render_3d_block(self.screen, inner_rect, color)
                 else:  # Empty cell
                     pygame.draw.rect(self.screen, (50, 50, 50), rect)  # Dark gray for empty cells
                 pygame.draw.rect(self.screen, (255, 255, 255), rect, 1)  # Grid border

@@ -10,27 +10,69 @@ class BlockObject:
         self.shape = shape  # 2D array representing the block's shape
         self.dragging = False
         self.placed = False  # Whether the block has been placed on the grid
+        self.offset_x = 0
+        self.offset_y = 0
 
     def update(self):
-        # Handle dragging logic
-        if self.dragging and not self.placed:
+        if self.dragging:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            self.x = mouse_x - self.size // 2
-            self.y = mouse_y - self.size // 2
+            # Update the block's position using the offset
+            self.x = mouse_x - self.offset_x
+            self.y = mouse_y - self.offset_y
 
     def render(self, screen):
-        # Render each cell of the block
         for row_idx, row in enumerate(self.shape):
             for col_idx, cell in enumerate(row):
-                if cell:  # Only draw filled cells
+                if cell:  # Only render filled cells
                     rect = pygame.Rect(
                         self.x + col_idx * self.size,
                         self.y + row_idx * self.size,
                         self.size,
-                        self.size
+                        self.size,
                     )
-                    pygame.draw.rect(screen, self.color, rect)
-                    pygame.draw.rect(screen, (0, 0, 0), rect, 1)  # Add a border
+                    render_3d_block(screen, rect, self.color)
+
+def render_3d_block(screen, rect, color):
+    # Base color
+    pygame.draw.rect(screen, color, rect)
+
+    # Add exaggerated 3D effect
+    inner_rect = rect.inflate(-8, -8)  # Smaller inner square
+    light_color = tuple(min(c + 80, 255) for c in color[:3])  # Much lighter shade
+    dark_color = tuple(max(c - 80, 0) for c in color[:3])  # Much darker shade
+    side_color = tuple((light_color[i] + dark_color[i]) // 2 for i in range(3))  # Mid-tone for sides
+
+    # Top highlight
+    pygame.draw.polygon(screen, light_color, [
+        rect.topleft,
+        rect.topright,
+        inner_rect.topright,
+        inner_rect.topleft
+    ])
+
+    # Bottom shadow
+    pygame.draw.polygon(screen, dark_color, [
+        rect.bottomleft,
+        rect.bottomright,
+        inner_rect.bottomright,
+        inner_rect.bottomleft
+    ])
+
+    # Left side shading
+    pygame.draw.polygon(screen, side_color, [
+        rect.topleft,
+        rect.bottomleft,
+        inner_rect.bottomleft,
+        inner_rect.topleft
+    ])
+
+    # Right side shading
+    pygame.draw.polygon(screen, side_color, [
+        rect.topright,
+        rect.bottomright,
+        inner_rect.bottomright,
+        inner_rect.topright
+    ])
 
 # Block templates
 BLOCK_SHAPES = {
